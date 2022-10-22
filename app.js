@@ -19,15 +19,44 @@ const itemSchema = new mongoose.Schema({
 
 const listSchema = new mongoose.Schema({
   listName: String,
-  items: itemSchema
+  items: [itemSchema]
 });
+
+const flagSchema = new mongoose.Schema({
+  firstTime: Boolean
+});
+
+const Flag = mongoose.model("Flag", flagSchema);
 
 const List = mongoose.model("List", listSchema);
 
 const defaults = [{name: "Buy Food"}, {name: "Cook Food"}, {name: "Eat Food"}];
 
 app.get("/", async (req, res) => {
-  
+  const flags = await Flag.find();
+  const lists = await List.find();
+
+  if (flags.length === 0) {
+    console.log("no lists has been created");
+
+    const firstFlag = new Flag({
+      firstTime: true
+    });
+
+    firstFlag.save();
+
+    const list = new List({
+      listName: "tasks",
+      items: [{name: "Buy Food"}, {name: "Cook Food"}, {name: "Eat Food"}]
+    });
+
+    list.save();
+
+    res.redirect("/");
+
+  } else {
+    console.log(lists);
+  }
 
 });
 
