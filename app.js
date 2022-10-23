@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
 
@@ -30,14 +31,13 @@ const Flag = mongoose.model("Flag", flagSchema);
 
 const List = mongoose.model("List", listSchema);
 
-const defaults = [{name: "Buy Food"}, {name: "Cook Food"}, {name: "Eat Food"}];
+
+let listAux = "tasks";
 
 app.get("/", async (req, res) => {
   const flags = await Flag.find();
-  const lists = await List.find();
 
   if (flags.length === 0) {
-    console.log("no lists has been created");
 
     const firstFlag = new Flag({
       firstTime: true
@@ -45,44 +45,32 @@ app.get("/", async (req, res) => {
 
     firstFlag.save();
 
-    const list = new List({
-      listName: "tasks",
-      items: [{name: "Buy Food"}, {name: "Cook Food"}, {name: "Eat Food"}]
-    });
-
+    const list = new List();
+    list.listName = 'tasks';
+    list.items.push({name: "Buy food"});
+    list.items.push({name: "Cook food"});
+    list.items.push({name: "Eat food"});
     list.save();
+
+    listAux = 'tasks';
 
     res.redirect("/");
 
   } else {
-    console.log(lists);
+    const list = await List.findOne({listName: listAux}).exec();
+
+    res.render("list", {listTitle: "tasks", arrayItems: list.items});
+
   }
 
 });
 
 app.post("/", function(req, res) {
-  const newItem = req.body.newItem;
 
-  const item = new Item({
-    name: newItem
-  });
-
-  item.save()
-
-  res.redirect("/");
 
 });
 
 app.post("/delete", function(req, res) {
-  Item.findOneAndDelete({_id: req.body.checkbox}, function(err, itemDeleted) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Item deleted: " + itemDeleted.name);
-    }
-  });
-
-  res.redirect("/");
 })
 
 app.get("/:list", function(req, res) {
