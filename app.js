@@ -24,7 +24,8 @@ const listSchema = new mongoose.Schema({
 });
 
 const flagSchema = new mongoose.Schema({
-  firstTime: Boolean
+  firstTime: Boolean,
+  currentList: String
 });
 
 const Flag = mongoose.model("Flag", flagSchema);
@@ -32,15 +33,14 @@ const Flag = mongoose.model("Flag", flagSchema);
 const List = mongoose.model("List", listSchema);
 
 
-let listAux = "tasks";
-
 app.get("/", async (req, res) => {
   const flags = await Flag.find();
 
   if (flags.length === 0) {
 
     const firstFlag = new Flag({
-      firstTime: true
+      firstTime: true,
+      currentList: 'tasks'
     });
 
     firstFlag.save();
@@ -52,14 +52,13 @@ app.get("/", async (req, res) => {
     list.items.push({name: "Eat food"});
     list.save();
 
-    listAux = 'tasks';
-
     res.redirect("/");
 
   } else {
-    const list = await List.findOne({listName: listAux}).exec();
+    const flags = await Flag.findOne({firstTime: true}).exec();
+    const list = await List.findOne({listName: flags.currentList}).exec();
 
-    res.render("list", {listTitle: "tasks", arrayItems: list.items});
+    res.render("list", {listTitle: _.upperFirst(flags.currentList), arrayItems: list.items});
 
   }
 
@@ -67,14 +66,28 @@ app.get("/", async (req, res) => {
 
 app.post("/", function(req, res) {
 
-
 });
 
 app.post("/delete", function(req, res) {
 })
 
-app.get("/:list", function(req, res) {
+app.get("/lists/:list", async (req, res) => {
+  const list = await List.findOne({listName: req.params.list});
+  const flags = await Flag.findOne({firstTime: true}).exec();
+  
+  if (!list) {
+    const newList = new List({
+      listName: req.params.list,
+      items: []
+    });
 
+    newList.save();
+  }
+
+  flags.currentList = req.params.list;
+  flags.save();
+
+  res.redirect("/");
 });
 
 app.listen(3000, function() {
