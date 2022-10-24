@@ -72,7 +72,12 @@ app.post("/", async (req, res) => {
   res.redirect("/");
 });
 
-app.post("/delete", function(req, res) {
+app.post("/delete", async (req, res) => {
+  const listName = await Flag.findOne({}, 'currentList').exec();
+  const list = await List.findOne({listName: listName.currentList}).exec();
+  list.items.id(req.body.checkbox).remove();
+  list.save();
+  res.redirect("/");
 })
 
 app.get("/lists/:list", async (req, res) => {
