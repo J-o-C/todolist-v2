@@ -58,14 +58,18 @@ app.get("/", async (req, res) => {
     const flags = await Flag.findOne({firstTime: true}).exec();
     const list = await List.findOne({listName: flags.currentList}).exec();
 
-    res.render("list", {listTitle: _.upperFirst(flags.currentList), arrayItems: list.items});
+    res.render("list", {listTitle: _.upperFirst(flags.currentList), arrayItems: list.items, listName: list.listName});
 
   }
 
 });
 
-app.post("/", function(req, res) {
+app.post("/", async (req, res) => {
+  const list = await List.findOne({listName: req.body.list}).exec();
+  list.items.push({name: req.body.newItem});
+  list.save();
 
+  res.redirect("/");
 });
 
 app.post("/delete", function(req, res) {
@@ -74,7 +78,7 @@ app.post("/delete", function(req, res) {
 app.get("/lists/:list", async (req, res) => {
   const list = await List.findOne({listName: req.params.list});
   const flags = await Flag.findOne({firstTime: true}).exec();
-  
+
   if (!list) {
     const newList = new List({
       listName: req.params.list,
